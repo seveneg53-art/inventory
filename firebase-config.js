@@ -9,7 +9,6 @@ export const firebaseConfig = {
   measurementId: "G-72H0VC3JGT"
 };
 
-// احتفظ بقائمة المديرين الموجودة في ملفك القديم
 export const adminEmails = [
-  // ضع بريد المدير هنا
+  "seveneg53@gmail.com"
 ];
