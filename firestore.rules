@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    // الإيميلات اللي ليها صلاحية مدير (نفس القائمة في firebase-config.js)
+    function isAdmin() {
+      return signedIn() && request.auth.token.email in ['seveneg53@gmail.com'];
+    }
+
+    match /items/{id} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      // الموظف يقدر يعدّل الكمية الفعلية فقط
+      allow update: if isAdmin() || (signedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['counted', 'countedBy', 'countedAt']));
+    }
+
+    match /counts/{id} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
