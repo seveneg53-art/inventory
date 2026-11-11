@@ -302,7 +302,7 @@ import {getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,onSnapshot,writeB
 const fapp=initializeApp(firebaseConfig),auth=getAuth(fapp),db=getFirestore(fapp);
 const pathParts = location.pathname.split("/").filter(Boolean);
 const BASE_PATH = pathParts.length ? "/" + pathParts[0] + "/" : "/";
-const seg = (pathParts[1] || "").toLowerCase();
+const seg = (new URLSearchParams(location.search).get("brand") || "").toLowerCase();
 const PAGE = brands.find(b => b.id === seg) || null;
 const col=collection(db,"items"),hcol=collection(db,"counts");
 const itemsQ=PAGE?query(col,where("brand","==",PAGE.name)):null;
@@ -881,8 +881,9 @@ function onData(snap){
 }
 function onErr(e){setSync("bad","انقطع الاتصال");say(e&&e.code==="permission-denied"?"ليس لديك صلاحية لقراءة البيانات. تأكد من نشر قواعد Firestore.":"انقطع الاتصال بالبيانات. أعد تحميل الصفحة.")}
 
+
 /* التنقل بين الصفحات */
- function buildNav(){
+function buildNav(){
   const homeUrl = BASE_PATH;
 
   $("nav").innerHTML =
@@ -890,19 +891,16 @@ function onErr(e){setSync("bad","انقطع الاتصال");say(e&&e.code==="pe
     (!PAGE ? ' aria-current="page"' : '') +
     '>الرئيسية</a>' +
     brands.map(b =>
-      '<a href="' + homeUrl + encodeURIComponent(b.id) + '/"' +
+      '<a href="' + homeUrl + '?brand=' + encodeURIComponent(b.id) + '"' +
       (PAGE && PAGE.id === b.id ? ' aria-current="page"' : '') +
       '>' + esc(b.name) + '</a>'
     ).join("");
 
   $("homeList").innerHTML = brands.map(b =>
-    '<a class="bcard" href="' + homeUrl + encodeURIComponent(b.id) + '/">' +
+    '<a class="bcard" href="' + homeUrl + '?brand=' + encodeURIComponent(b.id) + '">' +
     '<b>' + esc(b.name) + '</b>' +
     '<span>فتح صفحة الجرد</span></a>'
   ).join("");
-}
-  $("nav").innerHTML='<a href="/"'+(!PAGE?' aria-current="page"':"")+">الرئيسية</a>"+brands.map(b=>'<a href="/'+esc(b.id)+'"'+(PAGE&&PAGE.id===b.id?' aria-current="page"':"")+">"+esc(b.name)+"</a>").join("");
-  $("homeList").innerHTML=brands.map(b=>'<a class="bcard" href="/'+esc(b.id)+'"><b>'+esc(b.name)+"</b><span>فتح صفحة الجرد</span></a>").join("");
 }
 
 /* تسجيل الدخول */
