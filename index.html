@@ -294,7 +294,7 @@ dialog form{display:grid;gap:8px}
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
-import {firebaseConfig,adminEmails,brands,sizeCodes,numericSizeWords} from "/firebase-config.js";
+ import {firebaseConfig,adminEmails,brands,sizeCodes,numericSizeWords} from "./firebase-config.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,onSnapshot,writeBatch,query,where} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
