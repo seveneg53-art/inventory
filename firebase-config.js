@@ -9,6 +9,25 @@ export const firebaseConfig = {
   measurementId: "G-72H0VC3JGT"
 };
 
-export const adminEmails = [
-  "seveneg53@gmail.com"
+export const adminEmails = ["seveneg53@gmail.com"];
+
+export const brands = [
+  { id: "seven", name: "Seven" },
+  { id: "archive", name: "Archive" },
+  { id: "jeanetics", name: "Jeanetics" }
+];
+
+export const sizeCodes = {
+  "0": "XXS",
+  "1": "XS",
+  "2": "S",
+  "3": "M",
+  "4": "L",
+  "5": "XL"
+};
+
+export const numericSizeWords = [
+  "shoe", "shoes", "sneaker", "boot", "boots", "sandal",
+  "pant", "pants", "jean", "jeans", "trouser", "trousers",
+  "شوز", "حذاء", "جزمة", "جزم", "بنطلون", "بناطيل", "جينز"
 ];
