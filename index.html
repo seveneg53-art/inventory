@@ -189,6 +189,18 @@ dialog form{display:grid;gap:8px}
   <div class="row" style="margin-top:8px">
     <input class="grow" type="text" id="nCode" placeholder="كود الموديل (الباركود)" aria-label="كود الموديل" dir="ltr">
     <input class="grow" type="text" id="nName" placeholder="اسم الموديل" aria-label="اسم الموديل">
+ 
+<select class="grow" id="nCategory" aria-label="تصنيف الصنف">
+  <option value="">اختر التصنيف</option>
+  <option value="جينز">جينز</option>
+  <option value="تيشيرت">تيشيرت</option>
+  <option value="قميص">قميص</option>
+  <option value="بنطلون">بنطلون</option>
+  <option value="جاكيت">جاكيت</option>
+  <option value="شورت">شورت</option>
+  <option value="أخرى">أخرى</option>
+</select>
+
   </div>
   <div class="row">
     <input class="grow" type="text" id="nColors" placeholder="الألوان (أسود, أبيض)" aria-label="الألوان">
@@ -411,7 +423,9 @@ function gridHTML(v){
 function rowHTML(it){
   const st=status(it);
   return '<div class="item" data-id="'+esc(it.id)+'"><div>'+
-    (it.size&&view!=="size"?'<span class="tag">'+esc(it.size)+"</span>":"")+(it.color&&view!=="color"?'<span class="tag">'+esc(it.color)+"</span>":"")+
+    (it.category?'<span class="tag">'+esc(it.category)+'</span>':'')+
+    (it.size&&view!=="size"?'<span class="tag">'+esc(it.size)+"</span>":"")+
+    (it.color&&view!=="color"?'<span class="tag">'+esc(it.color)+"</span>":"")+
     (it.sku?'<span class="tag sku">SKU '+esc(it.sku)+"</span>":"")+
     '<span class="sys">النظام: <b>'+it.sys+"</b></span></div>"+
     '<div><span class="chip '+st.c+'">'+st.t+"</span>"+(admin?'<button class="ic" data-a="edit" aria-label="تعديل">✎</button><button class="ic" data-a="del" aria-label="حذف">×</button>':"")+"</div>"+
@@ -487,7 +501,25 @@ $("list").addEventListener("keydown",e=>{
 });
 
 /* إضافة وتعديل */
-const mk=o=>{const d=derive(o);return{brand:PAGE.name,code:d.code,sku:d.sku,name:d.name,size:d.size,color:d.color,sys:o.sys||0,counted:null,countedBy:null,countedAt:null,createdAt:Date.now()}};
+ 
+const mk=o=>{
+  const d=derive(o);
+  return{
+    brand:PAGE.name,
+    category:o.category||"غير مصنف",
+    code:d.code,
+    sku:d.sku,
+    name:d.name,
+    size:d.size,
+    color:d.color,
+    sys:o.sys||0,
+    counted:null,
+    countedBy:null,
+    countedAt:null,
+    createdAt:Date.now()
+  };
+};
+
 async function commit(docs){for(let i=0;i<docs.length;i+=400){const b=writeBatch(db);docs.slice(i,i+400).forEach(d=>b.set(doc(col),d));await b.commit()}}
 async function bulkUpdate(list,fn){for(let i=0;i<list.length;i+=400){const b=writeBatch(db);list.slice(i,i+400).forEach(it=>b.update(doc(db,"items",it.id),fn(it)));await b.commit()}}
 async function bulkDelete(list){for(let i=0;i<list.length;i+=400){const b=writeBatch(db);list.slice(i,i+400).forEach(it=>b.delete(doc(db,"items",it.id)));await b.commit()}}
@@ -499,24 +531,26 @@ document.querySelectorAll("#szKind button").forEach(b=>{
   b.onclick=()=>{szKind=b.dataset.k;document.querySelectorAll("#szKind button").forEach(x=>x.setAttribute("aria-pressed",x===b));Object.keys(SZBOX).forEach(k=>{$(SZBOX[k]).hidden=k!==szKind})};
 });
 $("szFillBtn").onclick=()=>{const v=$("szFill").value;if(v==="")return;document.querySelectorAll("#"+SZBOX[szKind]+" input").forEach(i=>{i.value=v})};
+ const DEFAULT_CATEGORIES=["جينز","تيشيرت","قميص","بنطلون","جاكيت","شورت","أخرى"];
 $("addBtn").onclick=async()=>{
-  const name=$("nName").value.trim();if(!name){$("nName").focus();return}
-  const code=$("nCode").value.trim(),skuB=$("nSku").value.trim(),S=[];
+const name=$("nName").value.trim();
+const category=$("nCategory").value||"غير مصنف";
+if(!name){$("nName").focus();return}  const code=$("nCode").value.trim(),skuB=$("nSku").value.trim(),S=[];
   document.querySelectorAll("#"+SZBOX[szKind]+" input").forEach(i=>{if(i.value!=="")S.push({s:i.dataset.z,q:toNum(i.value)||0})});
   split($("nSizes").value).forEach(t=>{const m=t.split(/[:=]/),z=m[0].trim();if(z&&!S.some(x=>norm(x.s)===norm(z)))S.push({s:z,q:m.length>1?(toNum(m[1])||0):0})});
   const C=split($("nColors").value),def=toNum($("nSys").value)||0;
   const Ss=S.length?S:[{s:"",q:def}],Cs=C.length?C:[""],multi=Ss.length*Cs.length>1,docs=[];let dup=0;
   Ss.forEach(z=>Cs.forEach(c=>{
-    const o=Object.assign(derive({code,name,size:z.s,color:c,sku:skuB}),{sys:z.q});
-    if(o.code&&items.some(i=>keyOf(i)===keyOf(o))){dup++;return}
+const o=Object.assign(derive({code,name,size:z.s,color:c,sku:skuB}),{sys:z.q,category});
+   if(o.code&&items.some(i=>keyOf(i)===keyOf(o))){dup++;return}
     docs.push(mk(o));
   }));
   if(!docs.length){say("كل هذه الأصناف موجودة بالفعل.");return}
   $("addBtn").disabled=true;
   try{
     await commit(docs);
-    ["nCode","nName","nSizes","nColors","nSys","nSku","szFill"].forEach(id=>$(id).value="");
-    document.querySelectorAll("#szGrid input").forEach(i=>{i.value=""});
+["nCode","nName","nSizes","nColors","nSys","nSku","szFill","nCategory"].forEach(id=>$(id).value="");
+   document.querySelectorAll("#szGrid input").forEach(i=>{i.value=""});
     say("تمت إضافة "+docs.length+" صف"+(dup?" وتم تخطي "+dup+" مكرر":"")+".");$("nCode").focus();
   }catch(e){fail(e)}
   $("addBtn").disabled=false;
@@ -872,16 +906,40 @@ $("hist").addEventListener("click",e=>{
 });
 
 /* البيانات */
+
 function onData(snap){
-  let next=snap.docs.map(d=>{const x=d.data()||{};return Object.assign({id:d.id},derive({code:x.code,sku:x.sku,name:x.name,size:x.size,color:x.color}),{sys:Number(x.sys)||0,counted:x.counted==null?null:Number(x.counted),countedBy:x.countedBy||"",countedAt:x.countedAt||0})});
+  let next=snap.docs.map(d=>{
+    const x=d.data()||{};
+    return Object.assign(
+      {id:d.id},
+      derive({
+        code:x.code,
+        sku:x.sku,
+        name:x.name,
+        size:x.size,
+        color:x.color
+      }),
+      {
+        category:x.category||"غير مصنف",
+        sys:Number(x.sys)||0,
+        counted:x.counted==null?null:Number(x.counted),
+        countedBy:x.countedBy||"",
+        countedAt:x.countedAt||0
+      }
+    );
+  });
+
   next=next.map(n=>pending[n.id]&&byId(n.id)?byId(n.id):n);
-  const typing=document.activeElement&&document.activeElement.tagName==="INPUT"&&$("list").contains(document.activeElement);
-  items=next;setSync("ok","متزامن");
-  typing?patchChips():render();renderPick();
+
+  const typing=document.activeElement&&
+    document.activeElement.tagName==="INPUT"&&
+    $("list").contains(document.activeElement);
+
+  items=next;
+  setSync("ok","متزامن");
+  typing?patchChips():render();
+  renderPick();
 }
-function onErr(e){setSync("bad","انقطع الاتصال");say(e&&e.code==="permission-denied"?"ليس لديك صلاحية لقراءة البيانات. تأكد من نشر قواعد Firestore.":"انقطع الاتصال بالبيانات. أعد تحميل الصفحة.")}
-
-
 /* التنقل بين الصفحات */
 function buildNav(){
   const homeUrl = BASE_PATH;
